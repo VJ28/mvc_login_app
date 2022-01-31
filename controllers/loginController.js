@@ -1,5 +1,5 @@
 const passport = require("passport");
-const User = require("../models/User");
+const User = require("../models/").user;
 const bcrypt = require("bcryptjs");
 
 //For Register Page
@@ -9,7 +9,7 @@ const registerView = (req, res) => {
 
 //Post Request for Register
 
-const registerUser = (req, res) => {
+const registerUser = async (req, res) => {
   const { name, email, location, password, confirm } = req.body;
 
   if (!name || !email || !password || !confirm) {
@@ -22,7 +22,8 @@ const registerUser = (req, res) => {
     console.log("Password must match");
   } else {
     //Validation
-    User.findOne({ email: email }).then((user) => {
+    console.log(User);
+    User.findOne({ where : { email }}).then((user) => {
       if (user) {
         console.log("email exists");
         res.render("register", {
@@ -33,24 +34,25 @@ const registerUser = (req, res) => {
         });
       } else {
         //Validation
-        const newUser = new User({
-          name,
-          email,
-          location,
-          password,
-        });
-        //Password Hashing
         bcrypt.genSalt(10, (err, salt) =>
-          bcrypt.hash(newUser.password, salt, (err, hash) => {
-            if (err) throw err;
+            bcrypt.hash(password, salt, (err, hash) => {
+              if (err) throw err;
 
-            newUser.password = hash;
-            newUser
-              .save()
-              .then(res.redirect("/login"))
-              .catch((err) => console.log(err));
-          })
-        );
+              User.create({
+                name,
+                email,
+                location,
+                'password': hash,
+              }).then(user => {
+                res.redirect("/login");
+              }).catch(err => {
+                res.status(500).send({
+                  message:
+                    err.message || "Some error occurred while creating the User."
+                });
+              });
+            })
+          );
       }
     });
   }
@@ -63,7 +65,12 @@ const loginView = (req, res) => {
 
 //Logging in Function
 
-const loginUser = (req, res) => {
+const logoutUser = (req, res, next) => {
+  req.logout();
+  res.render("logout", {});
+}
+
+const loginUser = (req, res, next) => {
   const { email, password } = req.body;
 
   //Required
@@ -78,7 +85,7 @@ const loginUser = (req, res) => {
       successRedirect: "/dashboard",
       failureRedirect: "/login",
       failureFlash: true,
-    })(req, res);
+    })(req, res, next);
   }
 };
 
@@ -87,4 +94,5 @@ module.exports = {
   loginView,
   registerUser,
   loginUser,
+  logoutUser
 };

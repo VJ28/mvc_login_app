@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const mongoose = require("mongoose");
+const sequelize = require("sequelize");
 const dotenv = require("dotenv");
 const session = require('express-session');
 dotenv.config();
@@ -8,12 +8,9 @@ const passport = require("passport");
 const { loginCheck } = require("./auth/passport");
 loginCheck(passport);
 
-// Mongo DB conncetion
-const database = process.env.MONGOLAB_URI;
-mongoose
-  .connect(database, { useUnifiedTopology: true, useNewUrlParser: true })
-  .then(() => console.log("e don connect"))
-  .catch((err) => console.log(err));
+// const db = require("./models");
+// db.sequelize.sync();
+
 
 app.set("view engine", "ejs");
 
